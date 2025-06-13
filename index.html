@@ -1692,7 +1692,7 @@
                                 <span class="spec-item">Protocolo rápido</span>
                                 <span class="spec-item">10 minutos</span>
                             </div>
-                        </div>
+                      u  </div>
                         <div class="protocol-steps-info">
                             <div class="step-item">
                                 <span class="step-number">1</span>
@@ -2709,92 +2709,373 @@
             const doc = new jsPDF();
             
             const formData = getReportFormData();
-            let yPosition = 20;
+            let yPosition = 25;
+            const pageWidth = doc.internal.pageSize.width;
+            const pageHeight = doc.internal.pageSize.height;
             
-            // Header
-            doc.setFontSize(16);
+            // Header with background
+            doc.setFillColor(31, 41, 91); // Dark blue background
+            doc.rect(0, 0, pageWidth, 35, 'F');
+            
+            doc.setFontSize(18);
             doc.setFont(undefined, 'bold');
-            doc.text('DOCUMENTO DE REGISTRO DE ACTUACIONES', 20, yPosition);
-            yPosition += 10;
-            doc.text('PARTE DE INCIDENCIAS - PISCINA', 20, yPosition);
-            yPosition += 20;
+            doc.setTextColor(255, 255, 255); // White text
+            doc.text('DOCUMENTO DE REGISTRO DE ACTUACIONES', pageWidth/2, 15, {align: 'center'});
+            doc.setFontSize(14);
+            doc.text('PARTE DE INCIDENCIAS - PISCINA', pageWidth/2, 25, {align: 'center'});
             
-            // Basic info
-            doc.setFontSize(12);
+            // Reset text color
+            doc.setTextColor(0, 0, 0);
+            yPosition = 50;
+            
+            // Basic info in a box
+            doc.setDrawColor(200, 200, 200);
+            doc.setFillColor(248, 249, 250);
+            doc.rect(15, yPosition-5, pageWidth-30, 25, 'FD');
+            
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text(`HOTEL:`, 20, yPosition + 5);
             doc.setFont(undefined, 'normal');
-            doc.text(`HOTEL: ${formData.hotelName}`, 20, yPosition);
-            doc.text(`FECHA: ${formData.incidentDate}`, 120, yPosition);
-            yPosition += 10;
-            doc.text(`PISCINA AFECTADA: ${formData.poolAffected}`, 20, yPosition);
-            doc.text(`HORA DETECCIÓN: ${formData.detectionTime}`, 120, yPosition);
-            yPosition += 20;
+            doc.text(`${formData.hotelName}`, 45, yPosition + 5);
             
-            // Incident type
-            doc.text('TIPO DE INCIDENCIA:', 20, yPosition);
-            yPosition += 8;
+            doc.setFont(undefined, 'bold');
+            doc.text(`FECHA:`, 120, yPosition + 5);
+            doc.setFont(undefined, 'normal');
+            doc.text(`${formData.incidentDate}`, 140, yPosition + 5);
+            
+            doc.setFont(undefined, 'bold');
+            doc.text(`PISCINA AFECTADA:`, 20, yPosition + 15);
+            doc.setFont(undefined, 'normal');
+            doc.text(`${formData.poolAffected}`, 70, yPosition + 15);
+            
+            doc.setFont(undefined, 'bold');
+            doc.text(`HORA DETECCIÓN:`, 120, yPosition + 15);
+            doc.setFont(undefined, 'normal');
+            doc.text(`${formData.detectionTime}`, 165, yPosition + 15);
+            
+            yPosition += 35;
+            
+            // Incident type section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(240, 240, 240);
+            doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+            doc.text('TIPO DE INCIDENCIA:', 20, yPosition + 6);
+            yPosition += 15;
+            
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(10);
             formData.incidentTypes.forEach(type => {
                 doc.text(`☑ ${type}`, 25, yPosition);
-                yPosition += 6;
+                yPosition += 7;
             });
-            yPosition += 10;
+            yPosition += 8;
             
-            // Description
+            // Description section
             if (formData.incidentDescription) {
-                doc.text('DESCRIPCIÓN DEL INCIDENTE:', 20, yPosition);
-                yPosition += 8;
-                const splitDescription = doc.splitTextToSize(formData.incidentDescription, 170);
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+                doc.text('DESCRIPCIÓN DEL INCIDENTE:', 20, yPosition + 6);
+                yPosition += 15;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                const splitDescription = doc.splitTextToSize(formData.incidentDescription, pageWidth-40);
                 doc.text(splitDescription, 20, yPosition);
-                yPosition += splitDescription.length * 6 + 10;
+                yPosition += splitDescription.length * 5 + 15;
             }
             
-            // Actions taken
-            doc.text('ACTUACIONES REALIZADAS:', 20, yPosition);
-            yPosition += 8;
+            // Actions section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(240, 240, 240);
+            doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+            doc.text('ACTUACIONES REALIZADAS:', 20, yPosition + 6);
+            yPosition += 15;
+            
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(10);
             doc.text(`HORA CIERRE PISCINA: ${formData.poolClosureTime}`, 20, yPosition);
-            yPosition += 6;
+            yPosition += 7;
             doc.text(`PERSONAL RESPONSABLE: ${formData.responsiblePerson}`, 20, yPosition);
             yPosition += 15;
             
-            // Treatment applied
-            if (formData.treatments.length > 0) {
-                doc.text('TRATAMIENTO APLICADO:', 20, yPosition);
+            // Removal contamination section
+            if (formData.removalMethods.length > 0) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('RETIRADA CONTAMINACIÓN:', 20, yPosition);
                 yPosition += 8;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                formData.removalMethods.forEach(method => {
+                    doc.text(`☑ ${method}`, 25, yPosition);
+                    yPosition += 6;
+                });
+                if (formData.removalObservations) {
+                    doc.text(`Observaciones: ${formData.removalObservations}`, 25, yPosition);
+                    yPosition += 6;
+                }
+                yPosition += 10;
+            }
+            
+            // Check if we need a new page
+            if (yPosition > pageHeight - 100) {
+                doc.addPage();
+                yPosition = 25;
+            }
+            
+            // Water parameters table
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(240, 240, 240);
+            doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+            doc.text('PARÁMETROS AGUA:', 20, yPosition + 6);
+            yPosition += 15;
+            
+            // Table headers
+            const tableStartY = yPosition;
+            const colWidths = [40, 35, 25, 80];
+            const tableHeaders = ['MOMENTO', 'CLORO LIBRE (ppm)', 'pH', 'OBSERVACIONES'];
+            
+            doc.setFillColor(200, 200, 200);
+            doc.rect(20, yPosition, colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], 10, 'F');
+            
+            doc.setFontSize(9);
+            doc.setFont(undefined, 'bold');
+            let xPos = 22;
+            tableHeaders.forEach((header, i) => {
+                doc.text(header, xPos, yPosition + 7);
+                xPos += colWidths[i];
+            });
+            yPosition += 10;
+            
+            // Table rows
+            const waterData = [
+                ['Inicial', formData.chlorineInitial, formData.phInitial, formData.obsInitial],
+                ['1ª Medición', formData.chlorine1, formData.ph1, formData.obs1],
+                ['2ª Medición', formData.chlorine2, formData.ph2, formData.obs2],
+                ['3ª Medición', formData.chlorine3, formData.ph3, formData.obs3],
+                ['Final', formData.chlorineFinal, formData.phFinal, formData.obsFinal]
+            ];
+            
+            doc.setFont(undefined, 'normal');
+            waterData.forEach((row, index) => {
+                if (index % 2 === 0) {
+                    doc.setFillColor(248, 249, 250);
+                    doc.rect(20, yPosition, colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], 8, 'F');
+                }
+                
+                xPos = 22;
+                row.forEach((cell, i) => {
+                    doc.text(cell || '', xPos, yPosition + 6);
+                    xPos += colWidths[i];
+                });
+                yPosition += 8;
+            });
+            
+            // Draw table borders
+            doc.setDrawColor(150, 150, 150);
+            let tableHeight = yPosition - tableStartY;
+            doc.rect(20, tableStartY, colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3], tableHeight);
+            
+            // Vertical lines
+            xPos = 20 + colWidths[0];
+            for (let i = 0; i < 3; i++) {
+                doc.line(xPos, tableStartY, xPos, yPosition);
+                xPos += colWidths[i + 1];
+            }
+            
+            yPosition += 15;
+            
+            // Treatment applied section
+            if (formData.treatments.length > 0) {
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+                doc.text('TRATAMIENTO APLICADO:', 20, yPosition + 6);
+                yPosition += 15;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
                 formData.treatments.forEach(treatment => {
                     doc.text(`☑ ${treatment}`, 25, yPosition);
+                    yPosition += 7;
+                });
+                yPosition += 10;
+            }
+            
+            // Systems section
+            if (formData.systems.length > 0) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('SISTEMAS:', 20, yPosition);
+                yPosition += 8;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                formData.systems.forEach(system => {
+                    doc.text(`☑ ${system}`, 25, yPosition);
                     yPosition += 6;
                 });
                 yPosition += 10;
             }
             
-            // Times
-            doc.text('TIEMPOS:', 20, yPosition);
-            yPosition += 8;
+            // Times section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(240, 240, 240);
+            doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+            doc.text('TIEMPOS:', 20, yPosition + 6);
+            yPosition += 15;
+            
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(10);
             doc.text(`INICIO TRATAMIENTO: ${formData.treatmentStart}`, 20, yPosition);
-            yPosition += 6;
+            yPosition += 7;
             doc.text(`FIN TRATAMIENTO: ${formData.treatmentEnd}`, 20, yPosition);
-            yPosition += 6;
+            yPosition += 7;
             doc.text(`HORA REAPERTURA: ${formData.reopeningTime}`, 20, yPosition);
-            yPosition += 6;
+            yPosition += 7;
             doc.text(`TIEMPO TOTAL CIERRE: ${formData.totalClosure}`, 20, yPosition);
             yPosition += 15;
             
-            // Signatures
+            // Laboratory analysis section
+            if (formData.sendDate || formData.laboratory || formData.result) {
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+                doc.text('ANÁLISIS POSTERIOR:', 20, yPosition + 6);
+                yPosition += 15;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                if (formData.sendDate) {
+                    doc.text(`☑ Muestra enviada a laboratorio`, 25, yPosition);
+                    yPosition += 7;
+                    doc.text(`Fecha envío: ${formData.sendDate}`, 30, yPosition);
+                    yPosition += 7;
+                }
+                if (formData.laboratory) {
+                    doc.text(`Laboratorio: ${formData.laboratory}`, 30, yPosition);
+                    yPosition += 7;
+                }
+                if (formData.result) {
+                    doc.text(`Resultado: ${formData.result}`, 30, yPosition);
+                    yPosition += 7;
+                }
+                if (formData.resultDate) {
+                    doc.text(`Fecha resultado: ${formData.resultDate}`, 30, yPosition);
+                    yPosition += 7;
+                }
+                yPosition += 10;
+            }
+            
+            // Communications section
+            if (formData.communications.length > 0) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('COMUNICACIONES:', 20, yPosition);
+                yPosition += 8;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                formData.communications.forEach(comm => {
+                    doc.text(`☑ ${comm}`, 25, yPosition);
+                    yPosition += 6;
+                });
+                yPosition += 10;
+            }
+            
+            // Check if we need a new page for signatures
+            if (yPosition > pageHeight - 80) {
+                doc.addPage();
+                yPosition = 25;
+            }
+            
+            // Preventive measures section
+            if (formData.preventiveMeasures) {
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+                doc.text('MEDIDAS PREVENTIVAS ADOPTADAS:', 20, yPosition + 6);
+                yPosition += 15;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                const splitMeasures = doc.splitTextToSize(formData.preventiveMeasures, pageWidth-40);
+                doc.text(splitMeasures, 20, yPosition);
+                yPosition += splitMeasures.length * 5 + 15;
+            }
+            
+            // Additional observations section
+            if (formData.additionalObservations) {
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.setFillColor(240, 240, 240);
+                doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+                doc.text('OBSERVACIONES ADICIONALES:', 20, yPosition + 6);
+                yPosition += 15;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                const splitObservations = doc.splitTextToSize(formData.additionalObservations, pageWidth-40);
+                doc.text(splitObservations, 20, yPosition);
+                yPosition += splitObservations.length * 5 + 15;
+            }
+            
+            // Signatures section
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.setFillColor(240, 240, 240);
+            doc.rect(15, yPosition, pageWidth-30, 8, 'F');
+            doc.text('FIRMAS Y RESPONSABILIDADES:', 20, yPosition + 6);
+            yPosition += 20;
+            
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(10);
             doc.text('TÉCNICO RESPONSABLE:', 20, yPosition);
             yPosition += 8;
             doc.text(`${formData.technicianResponsible}`, 20, yPosition);
-            yPosition += 6;
+            yPosition += 8;
             doc.text(`FECHA: ${formData.signatureDate}`, 20, yPosition);
             yPosition += 15;
             
             doc.text('REVISADO POR DIRECCIÓN:', 20, yPosition);
             yPosition += 8;
-            doc.text(`${formData.managementReview}`, 20, yPosition);
-            yPosition += 6;
-            doc.text(`FECHA: ${formData.managementDate}`, 20, yPosition);
+            doc.text(`Nombre: ${formData.managementReview}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Fecha: ${formData.managementDate}`, 20, yPosition);
+            yPosition += 15;
+            
+            // Archive section
+            if (formData.archives.length > 0) {
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text('ARCHIVO:', 20, yPosition);
+                yPosition += 8;
+                
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                formData.archives.forEach(archive => {
+                    doc.text(`☑ ${archive}`, 25, yPosition);
+                    yPosition += 6;
+                });
+                yPosition += 10;
+            }
             
             // Footer
             doc.setFontSize(8);
-            doc.text('*Este documento debe conservarse mínimo 5 años', 20, 280);
+            doc.setFont(undefined, 'italic');
+            doc.text('*Este documento debe conservarse mínimo 5 años', 20, pageHeight - 15);
+            doc.text(`Generado automáticamente el ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}`, pageWidth - 100, pageHeight - 15);
             
             // Save PDF
             const fileName = `memoria-actuacion-${formData.hotelName.replace(/\s+/g, '-')}-${formData.incidentDate}.pdf`;
